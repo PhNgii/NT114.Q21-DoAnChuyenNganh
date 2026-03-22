@@ -1,0 +1,93 @@
+{
+  "metadata": {
+    "systemName": "QoS Command Center",
+    "location": "ap-southeast-1 • AWS",
+    "uptimeValue": "99.97%",
+    "slaValue": "92%",
+    "riskLevel": "Medium",
+    "lastOptimization": null,
+    "lastUpdated": "2026-03-17T15:55:06.961Z"
+  },
+  "series": {
+    "labels": [
+      "10:00",
+      "10:05",
+      "10:10",
+      "10:15",
+      "10:20",
+      "10:25",
+      "10:30"
+    ],
+    "actualLatency": [
+      40,
+      42,
+      48,
+      55,
+      52,
+      57,
+      52
+    ],
+    "predictedLatency": [
+      45,
+      50,
+      60,
+      75,
+      78,
+      82,
+      79
+    ],
+    "throughputSeries": [
+      132,
+      126,
+      121,
+      118,
+      116,
+      120,
+      118
+    ],
+    "packetLossSeries": [
+      0.1,
+      0.1,
+      0.2,
+      0.3,
+      0.2,
+      0.3,
+      0.2
+    ]
+  },
+  "recommendations": [
+    {
+      "icon": "01",
+      "title": "Re-route burst traffic",
+      "description": "Move short-lived requests away from the busiest path to reduce queueing delay."
+    },
+    {
+      "icon": "02",
+      "title": "Scale network-intensive workers",
+      "description": "Provision more capacity for throughput-heavy services during the predicted spike."
+    },
+    {
+      "icon": "03",
+      "title": "Prioritize latency-sensitive flows",
+      "description": "Apply QoS rules to preserve response time for critical traffic classes."
+    }
+  ],
+  "insights": [
+    {
+      "icon": "AI",
+      "title": "Prediction confidence remains high",
+      "description": "The model found a consistent upward trend after 10:10, likely caused by burst traffic accumulation."
+    },
+    {
+      "icon": "ML",
+      "title": "Best intervention window is now",
+      "description": "Applying routing and scaling before the next spike should protect the SLA and reduce expected delay."
+    },
+    {
+      "icon": "QoS",
+      "title": "Critical flows should be prioritized",
+      "description": "Latency-sensitive service classes can be preserved by using policy-based queue prioritization."
+    }
+  ],
+  "alertText": "The model detects a rising latency slope. Consider optimization before SLA risk crosses the warning threshold."
+}
