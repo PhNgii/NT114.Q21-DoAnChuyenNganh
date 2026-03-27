@@ -129,7 +129,22 @@ function computeScores(data) {
 function createResponse(data) {
   return {
     ...data,
-    computed: computeScores(data)
+    computed: computeScores(data),
+    optimizationPreview: data.optimizationPreview || null
+  };
+}
+function buildOptimizationPreview(before, after) {
+  return {
+    before: {
+      latency: before.latency,
+      throughput: before.throughput,
+      packetLoss: before.packetLoss
+    },
+    after: {
+      latency: after.latency,
+      throughput: after.throughput,
+      packetLoss: after.packetLoss
+    }
   };
 }
 
@@ -198,15 +213,81 @@ app.post('/api/metrics/simulate', async (req, res) => {
   await writeData(data);
   res.json(createResponse(data));
 });
+function buildScenarioResult(type, data) {
+  const i = data.series.actualLatency.length - 1;
 
+  const current = {
+    latency: data.series.actualLatency[i] ?? 50,
+    predictedLatency: data.series.predictedLatency[i] ?? 70,
+    throughput: data.series.throughputSeries[i] ?? 118,
+    packetLoss: data.series.packetLossSeries[i] ?? 0.2
+  };
+
+  switch (type) {
+    case 'peak':
+      return {
+        scenario: 'peak',
+        estimatedLatency: current.predictedLatency + 12,
+        estimatedRisk: 'High',
+        suggestedAction: 'Scale out before burst traffic'
+      };
+
+    case 'congestion':
+      return {
+        scenario: 'congestion',
+        estimatedLatency: current.predictedLatency + 18,
+        estimatedRisk: 'High',
+        suggestedAction: 'Re-route traffic and apply traffic shaping'
+      };
+
+    case 'loss':
+      return {
+        scenario: 'loss',
+        estimatedLatency: current.predictedLatency + 8,
+        estimatedRisk: 'Medium',
+        suggestedAction: 'Inspect network path and reduce packet loss'
+      };
+
+    case 'scaleout':
+      return {
+        scenario: 'scaleout',
+        estimatedLatency: Math.max(current.latency, current.predictedLatency - 10),
+        estimatedRisk: 'Low',
+        suggestedAction: 'Scale out preview shows improvement'
+      };
+
+    case 'normal':
+    default:
+      return {
+        scenario: 'normal',
+        estimatedLatency: current.predictedLatency,
+        estimatedRisk: 'Medium',
+        suggestedAction: 'Scale before burst'
+      };
+  }
+}
 app.post('/api/optimize', async (req, res) => {
   const data = await readData();
 
   const i = data.series.actualLatency.length - 1;
   if (i >= 0) {
-    data.series.predictedLatency[i] = Math.max(data.series.actualLatency[i], data.series.predictedLatency[i] - 8);
-    data.series.packetLossSeries[i] = Math.max(0, Number((data.series.packetLossSeries[i] - 0.1).toFixed(1)));
-    data.series.throughputSeries[i] = data.series.throughputSeries[i] + 6;
+    const before = {
+      latency: data.series.predictedLatency[i],
+      throughput: data.series.throughputSeries[i],
+      packetLoss: data.series.packetLossSeries[i]
+    };
+
+    const after = {
+      latency: Math.max(data.series.actualLatency[i], data.series.predictedLatency[i] - 8),
+      throughput: data.series.throughputSeries[i] + 6,
+      packetLoss: Math.max(0, Number((data.series.packetLossSeries[i] - 0.1).toFixed(1)))
+    };
+
+    data.optimizationPreview = buildOptimizationPreview(before, after);
+
+    data.series.predictedLatency[i] = after.latency;
+    data.series.packetLossSeries[i] = after.packetLoss;
+    data.series.throughputSeries[i] = after.throughput;
   }
 
   data.metadata.slaValue = '96%';
@@ -253,7 +334,17 @@ app.post('/api/reset', async (req, res) => {
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
+app.post('/api/scenario', async (req, res) => {
+  const data = await readData();
+  const { scenario } = req.body || {};
 
+  const result = buildScenarioResult(scenario, data);
+
+  res.json({
+    ok: true,
+    scenarioResult: result
+  });
+});
 ensureDataFile().then(() => {
   app.listen(PORT, () => {
     console.log(`Server running at http://localhost:${PORT}`);

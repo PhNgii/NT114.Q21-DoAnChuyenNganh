@@ -13,7 +13,42 @@ function setBar(id, value) {
   const bar = document.getElementById(id);
   if (bar) bar.style.width = `${value}%`;
 }
+function renderScenarioResult(result) {
+  if (!result) return;
 
+  setText('scenarioLatency', `${result.estimatedLatency} ms`);
+  setText('scenarioRisk', result.estimatedRisk);
+  setText('scenarioAction', result.suggestedAction);
+}
+function renderOptimizationPreview(preview) {
+  if (!preview) return;
+
+  setText('beforeLatency', `${preview.before.latency} ms`);
+  setText('afterLatency', `${preview.after.latency} ms`);
+
+  setText('beforeThroughput', `${preview.before.throughput} Mbps`);
+  setText('afterThroughput', `${preview.after.throughput} Mbps`);
+
+  setText('beforePacketLoss', `${Number(preview.before.packetLoss).toFixed(1)}%`);
+  setText('afterPacketLoss', `${Number(preview.after.packetLoss).toFixed(1)}%`);
+}
+
+async function runScenarioSimulation() {
+  const select = document.getElementById('scenarioSelect');
+  if (!select) return;
+
+  const scenario = select.value;
+  console.log('Scenario đang chọn:', scenario);
+
+  try {
+    const response = await apiRequest('/api/scenario', 'POST', { scenario });
+    console.log('Response scenario:', response);
+    renderScenarioResult(response.scenarioResult);
+  } catch (error) {
+    console.error(error);
+    alert(error.message || 'Scenario simulation failed');
+  }
+}
 function renderList(items = []) {
   const recommendationList = document.getElementById('recommendationList');
   if (!recommendationList) return;
@@ -71,7 +106,14 @@ function getRiskChipText(predicted, actual) {
 
 function renderDashboard(data) {
   state.data = data;
+
   const { metadata, computed, series, recommendations } = data;
+
+  renderScenarioResult({
+    estimatedLatency: computed.latestPredicted,
+    estimatedRisk: metadata.riskLevel,
+    suggestedAction: 'Scale before burst'
+  });
 
   setText('locationValue', metadata.location);
   setText('uptimeValue', metadata.uptimeValue);
@@ -99,9 +141,9 @@ function renderDashboard(data) {
 
   renderList(recommendations);
   renderHistoryTable(data);
+  renderOptimizationPreview(data.optimizationPreview);
   renderChart(series);
 }
-
 function renderChart(series) {
   const ctx = document.getElementById('chart');
   if (!ctx) return;
@@ -216,6 +258,8 @@ function updateTime() {
 }
 
 function bindEvents() {
+  document.getElementById('runScenarioButton')?.addEventListener('click', runScenarioSimulation);
+
   document.getElementById('optimizeButton')?.addEventListener('click', async () => {
     const data = await apiRequest('/api/optimize', 'POST');
     renderDashboard(data);
@@ -253,7 +297,6 @@ function bindEvents() {
     }
   });
 }
-
 updateTime();
 setInterval(updateTime, 1000);
 bindEvents();
