@@ -57,11 +57,38 @@ def main():
             },
             "predicted_latency": 220,
             "predicted_status": "Critical"
+        },
+        {
+            "name": "Warning - Medium Load",
+            "input": {
+                "cpu_usage": 72,
+                "memory_usage": 74,
+                "bandwidth_usage": 78,
+                "packet_loss": 1.8,
+                "network_load": 73,
+                "instance_count": 3,
+                "is_peak_hour": 0
+            },
+            "predicted_latency": 115,
+            "predicted_status": "Warning"
+        },
+        {
+            "name": "Good but Peak Hour",
+            "input": {
+                "cpu_usage": 45,
+                "memory_usage": 48,
+                "bandwidth_usage": 50,
+                "packet_loss": 0.6,
+                "network_load": 52,
+                "instance_count": 5,
+                "is_peak_hour": 1
+            },
+            "predicted_latency": 68,
+            "predicted_status": "Good"
         }
     ]
 
     for scenario in scenarios:
-        print("\n" + "=" * 60)
         print(f"Scenario: {scenario['name']}")
         recs = generate_recommendations(
             input_data=scenario["input"],
