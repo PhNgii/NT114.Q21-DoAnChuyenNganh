@@ -4,72 +4,112 @@
     "location": "ap-southeast-1 • AWS",
     "uptimeValue": "99.97%",
     "slaValue": "92%",
-    "riskLevel": "Medium",
+    "riskLevel": "High",
     "lastOptimization": null,
-    "lastUpdated": "2026-03-26T17:05:26.523Z"
+    "lastUpdated": "2026-04-06T07:47:44.744Z"
   },
   "series": {
     "labels": [
-      "10:00",
-      "10:05",
-      "10:10",
       "10:15",
       "10:20",
       "10:25",
-      "10:30"
+      "10:30",
+      "17:00",
+      "17:00",
+      "17:00",
+      "17:00",
+      "17:00",
+      "17:00",
+      "17:00",
+      "21:05"
     ],
     "actualLatency": [
-      40,
-      42,
-      48,
       55,
       52,
       57,
-      52
+      52,
+      145,
+      145,
+      145,
+      145,
+      145,
+      145,
+      145,
+      150
     ],
     "predictedLatency": [
-      45,
-      50,
-      60,
       75,
       78,
       82,
-      79
+      79,
+      156,
+      156,
+      156,
+      156,
+      156,
+      156,
+      156,
+      149
     ],
     "throughputSeries": [
-      132,
-      126,
-      121,
       118,
       116,
       120,
-      118
+      118,
+      96,
+      96,
+      96,
+      96,
+      96,
+      96,
+      96,
+      80
     ],
     "packetLossSeries": [
-      0.1,
-      0.1,
-      0.2,
       0.3,
       0.2,
       0.3,
-      0.2
+      0.2,
+      3.8,
+      3.8,
+      3.8,
+      3.8,
+      3.8,
+      3.8,
+      3.8,
+      3.5
     ]
   },
   "recommendations": [
     {
       "icon": "01",
-      "title": "Re-route burst traffic",
-      "description": "Move short-lived requests away from the busiest path to reduce queueing delay."
+      "title": "AI Recommendation 1",
+      "description": "High CPU usage: consider scaling up or scaling out by adding more instances."
     },
     {
       "icon": "02",
-      "title": "Scale network-intensive workers",
-      "description": "Provision more capacity for throughput-heavy services during the predicted spike."
+      "title": "AI Recommendation 2",
+      "description": "Memory usage is moderately high: check the application and consider reallocating resources."
     },
     {
       "icon": "03",
-      "title": "Prioritize latency-sensitive flows",
-      "description": "Apply QoS rules to preserve response time for critical traffic classes."
+      "title": "AI Recommendation 3",
+      "description": "High packet loss: check for congestion, routing issues, or link quality problems."
+    },
+    {
+      "icon": "04",
+      "title": "AI Recommendation 4",
+      "description": "Network load is moderately high: monitor closely to avoid overload during peak hours."
+    },
+    {
+      "icon": "05",
+      "title": "AI Recommendation 5",
+      "description": "Predicted latency is elevated: optimize the system early before it moves into a worse state."
+    },
+    {
+      "icon": "06",
+      "title": "AI Recommendation 6",
+      "description": "Critical status: immediate intervention is required to prevent QoS degradation."
     }
   ],
   "insights": [
@@ -89,5 +129,24 @@
       "description": "Latency-sensitive service classes can be preserved by using policy-based queue prioritization."
     }
   ],
-  "alertText": "The model detects a rising latency slope. Consider optimization before SLA risk crosses the warning threshold."
+  "alertText": "AI predicts Critical status with latency 148.54 ms. Immediate optimization is recommended.",
+  "latestPrediction": {
+    "actual_latency": 150,
+    "throughput": 80,
+    "packet_loss": 3.5,
+    "predicted_latency": 148.54,
+    "predicted_status": "Critical",
+    "model_input": {
+      "cpu_usage": 88,
+      "memory_usage": 85,
+      "bandwidth_usage": 56,
+      "packet_loss": 3.5,
+      "network_load": 82,
+      "active_users": 800,
+      "request_rate": 1200,
+      "instance_count": 4,
+      "time_of_day": 14,
+      "is_peak_hour": 0
+    }
+  }
 }

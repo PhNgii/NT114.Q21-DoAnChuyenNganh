@@ -1,3 +1,4 @@
+const { spawn } = require('child_process');
 const express = require('express');
 const path = require('path');
 const fs = require('fs/promises');
@@ -6,7 +7,12 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const DATA_DIR = path.join(__dirname, 'data');
 const DATA_FILE = path.join(DATA_DIR, 'metrics.json');
+const PYTHON_BIN =
+  process.platform === 'win32'
+    ? path.join(__dirname, 'venv', 'Scripts', 'python.exe')
+    : path.join(__dirname, 'venv', 'bin', 'python');
 
+const PREDICT_SCRIPT = path.join(__dirname, 'predict_qos.py');
 const defaultData = {
   metadata: {
     systemName: 'QoS Command Center',
@@ -101,7 +107,77 @@ function formatNextLabel() {
     minute: '2-digit'
   });
 }
+function toRecommendationItems(texts = []) {
+  return texts.map((text, index) => ({
+    icon: String(index + 1).padStart(2, '0'),
+    title: `AI Recommendation ${index + 1}`,
+    description: text
+  }));
+}
 
+function buildAlert(predictedStatus, predictedLatency, actualLatency) {
+  if (predictedStatus === 'Critical') {
+    return `AI predicts Critical status with latency ${predictedLatency.toFixed(2)} ms. Immediate optimization is recommended.`;
+  }
+
+  if (predictedStatus === 'Warning') {
+    return `AI predicts rising latency in the next cycle (${predictedLatency.toFixed(2)} ms), higher than current actual latency ${actualLatency} ms.`;
+  }
+
+  return `AI predicts the system is stable. Current predicted latency is ${predictedLatency.toFixed(2)} ms.`;
+}
+
+function mapStatusToRiskLevel(status) {
+  if (status === 'Critical') return 'High';
+  if (status === 'Warning') return 'Medium';
+  return 'Low';
+}
+
+function runPythonPrediction(payload) {
+  return new Promise((resolve, reject) => {
+    const py = spawn(PYTHON_BIN, [PREDICT_SCRIPT], {
+      cwd: __dirname,
+      env: {
+        ...process.env,
+        PYTHONIOENCODING: 'utf-8'
+      }
+    });
+      py.on('error', (err) => {
+    reject(new Error(`Cannot start Python process: ${err.message}`));
+  });
+    let stdout = '';
+    let stderr = '';
+
+    py.stdout.on('data', (chunk) => {
+      stdout += chunk.toString();
+    });
+
+    py.stderr.on('data', (chunk) => {
+      stderr += chunk.toString();
+    });
+
+    py.on('close', (code) => {
+      if (code !== 0) {
+        return reject(new Error(stderr || stdout || 'Python prediction failed'));
+      }
+
+      try {
+        const result = JSON.parse(stdout);
+
+        if (result.error) {
+          return reject(new Error(result.error));
+        }
+
+        resolve(result);
+      } catch (err) {
+        reject(new Error(`Cannot parse JSON from Python: ${stdout}`));
+      }
+    });
+
+    py.stdin.write(JSON.stringify(payload));
+    py.stdin.end();
+  });
+}
 function computeScores(data) {
   const latestActual = data.series.actualLatency.at(-1) ?? 0;
   const latestPredicted = data.series.predictedLatency.at(-1) ?? 0;
@@ -212,6 +288,88 @@ app.post('/api/metrics/simulate', async (req, res) => {
   clampSeries(data);
   await writeData(data);
   res.json(createResponse(data));
+});
+app.post('/api/metrics/predict', async (req, res) => {
+  try {
+    const actualLatency = Number(req.body.actualLatency);
+    const throughput = Number(req.body.throughput);
+    const packetLoss = Number(req.body.packetLoss);
+
+    if ([actualLatency, throughput, packetLoss].some((v) => Number.isNaN(v))) {
+      return res.status(400).json({
+        error: 'Missing actualLatency, throughput or packetLoss.'
+      });
+    }
+
+    const currentHour = new Date().getHours();
+
+    const features = {
+      cpu_usage: Number(req.body.cpuUsage),
+      memory_usage: Number(req.body.memoryUsage),
+      bandwidth_usage: Number(req.body.bandwidthUsage),
+      packet_loss: packetLoss,
+      network_load: Number(req.body.networkLoad),
+      active_users: Number(req.body.activeUsers),
+      request_rate: Number(req.body.requestRate),
+      instance_count: Number(req.body.instanceCount),
+      time_of_day:
+        req.body.timeOfDay !== undefined && req.body.timeOfDay !== ''
+          ? Number(req.body.timeOfDay)
+          : currentHour,
+      is_peak_hour:
+        req.body.isPeakHour !== undefined && req.body.isPeakHour !== ''
+          ? Number(req.body.isPeakHour)
+          : currentHour >= 18 && currentHour <= 22
+          ? 1
+          : 0
+    };
+
+    const invalidFeature = Object.values(features).some((v) => Number.isNaN(v));
+    if (invalidFeature) {
+      return res.status(400).json({
+        error: 'Missing model features for AI prediction.'
+      });
+    }
+
+    const prediction = await runPythonPrediction(features);
+
+    const data = await readData();
+    const label = (req.body.label || '').trim() || formatNextLabel();
+
+    data.series.labels.push(label);
+    data.series.actualLatency.push(actualLatency);
+    data.series.predictedLatency.push(Math.round(prediction.predicted_latency));
+    data.series.throughputSeries.push(throughput);
+    data.series.packetLossSeries.push(packetLoss);
+
+    data.metadata.riskLevel = mapStatusToRiskLevel(prediction.predicted_status);
+    data.alertText = buildAlert(
+      prediction.predicted_status,
+      prediction.predicted_latency,
+      actualLatency
+    );
+
+    data.recommendations = toRecommendationItems(prediction.recommendations);
+
+    data.latestPrediction = {
+      actual_latency: actualLatency,
+      throughput,
+      packet_loss: packetLoss,
+      predicted_latency: prediction.predicted_latency,
+      predicted_status: prediction.predicted_status,
+      model_input: prediction.model_input
+    };
+
+    clampSeries(data);
+    await writeData(data);
+
+    res.json(createResponse(data));
+  } catch (error) {
+    console.error('Prediction error:', error);
+    res.status(500).json({
+      error: error.message || 'Cannot run AI prediction.'
+    });
+  }
 });
 function buildScenarioResult(type, data) {
   const i = data.series.actualLatency.length - 1;

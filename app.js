@@ -280,22 +280,24 @@ function bindEvents() {
     renderDashboard(data);
     document.getElementById('manualMetricForm')?.reset();
   });
+document.getElementById('manualMetricForm')?.addEventListener('submit', async (event) => {
+  event.preventDefault();
 
-  document.getElementById('manualMetricForm')?.addEventListener('submit', async (event) => {
-    event.preventDefault();
+  const form = event.currentTarget;
+  if (!form) return;
 
-    const formData = new FormData(event.currentTarget);
-    const payload = Object.fromEntries(formData.entries());
+  const formData = new FormData(form);
+  const payload = Object.fromEntries(formData.entries());
 
-    try {
-      const data = await apiRequest('/api/metrics/manual', 'POST', payload);
-      renderDashboard(data);
-      event.currentTarget.reset();
-      setText('formStatus', 'Đã thêm mẫu dữ liệu mới thành công.');
-    } catch (error) {
-      setText('formStatus', error.message);
-    }
-  });
+  try {
+    const data = await apiRequest('/api/metrics/predict', 'POST', payload);
+    renderDashboard(data);
+    form.reset();
+    setText('formStatus', 'AI prediction completed and dashboard updated successfully.');
+  } catch (error) {
+    setText('formStatus', error.message || 'Failed to run AI prediction.');
+  }
+});
 }
 updateTime();
 setInterval(updateTime, 1000);

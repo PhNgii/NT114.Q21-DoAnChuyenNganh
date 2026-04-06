@@ -404,39 +404,73 @@
             </div>
           </div>
 
-          <form id="manualMetricForm" class="metric-form">
-            <div class="form-grid">
-              <label>
-                <span>Jitter (ms)</span>
-                <input type="number" name="jitter" min="0" />
-              </label>
-              <label>
-                <span>Label / Time</span>
-                <input type="text" name="label" placeholder="10:35" />
-              </label>
-              <label>
-                <span>Actual latency (ms)</span>
-                <input type="number" name="actualLatency" min="0" required />
-              </label>
-              <label>
-                <span>Predicted latency (ms)</span>
-                <input type="number" name="predictedLatency" min="0" required />
-              </label>
-              <label>
-                <span>Throughput (Mbps)</span>
-                <input type="number" name="throughput" min="0" required />
-              </label>
-              <label>
-                <span>Packet loss (%)</span>
-                <input type="number" name="packetLoss" min="0" step="0.1" required />
-              </label>
-            </div>
-            <div class="form-actions">
-              <button type="submit" class="primary-btn">Save sample</button>
-              <button type="button" class="ghost-btn" id="resetButton">Reset data</button>
-            </div>
-            <p class="form-status" id="formStatus">Bạn có thể nhập dữ liệu thật để dashboard cập nhật ngay.</p>
-          </form>
+        <form id="manualMetricForm" class="metric-form">
+  <div class="form-grid">
+    <label>
+      <span>Label / Time</span>
+      <input type="text" name="label" placeholder="21:00" />
+    </label>
+
+    <label>
+      <span>Actual latency (ms)</span>
+      <input type="number" name="actualLatency" min="0" required />
+    </label>
+
+    <label>
+      <span>Throughput (Mbps)</span>
+      <input type="number" name="throughput" min="0" required />
+    </label>
+
+    <label>
+      <span>Packet loss (%)</span>
+      <input type="number" name="packetLoss" min="0" step="0.1" required />
+    </label>
+
+    <label>
+      <span>CPU usage (%)</span>
+      <input type="number" name="cpuUsage" min="0" max="100" required />
+    </label>
+
+    <label>
+      <span>Memory usage (%)</span>
+      <input type="number" name="memoryUsage" min="0" max="100" required />
+    </label>
+
+    <label>
+      <span>Bandwidth usage (%)</span>
+      <input type="number" name="bandwidthUsage" min="0" max="100" required />
+    </label>
+
+    <label>
+      <span>Network load (%)</span>
+      <input type="number" name="networkLoad" min="0" max="100" required />
+    </label>
+
+    <label>
+      <span>Active users</span>
+      <input type="number" name="activeUsers" min="0" required />
+    </label>
+
+    <label>
+      <span>Request rate</span>
+      <input type="number" name="requestRate" min="0" required />
+    </label>
+
+    <label>
+      <span>Instance count</span>
+      <input type="number" name="instanceCount" min="1" required />
+    </label>
+  </div>
+
+  <div class="form-actions">
+    <button type="submit" class="primary-btn">Run AI prediction</button>
+    <button type="button" class="ghost-btn" id="resetButton">Reset data</button>
+  </div>
+
+  <p class="form-status" id="formStatus">
+    Enter a QoS sample so the AI model can predict and update the dashboard.
+  </p>
+</form>
         </article>
 
         <article class="history-panel glass-panel" id="historySection">
