@@ -21,7 +21,15 @@ function renderScenarioResult(result) {
   setText('scenarioAction', result.suggestedAction);
 }
 function renderOptimizationPreview(preview) {
-  if (!preview) return;
+  if (!preview) {
+    setText('beforeLatency', '--');
+    setText('afterLatency', '--');
+    setText('beforeThroughput', '--');
+    setText('afterThroughput', '--');
+    setText('beforePacketLoss', '--');
+    setText('afterPacketLoss', '--');
+    return;
+  }
 
   setText('beforeLatency', `${preview.before.latency} ms`);
   setText('afterLatency', `${preview.after.latency} ms`);
@@ -29,8 +37,8 @@ function renderOptimizationPreview(preview) {
   setText('beforeThroughput', `${preview.before.throughput} Mbps`);
   setText('afterThroughput', `${preview.after.throughput} Mbps`);
 
-  setText('beforePacketLoss', `${Number(preview.before.packetLoss).toFixed(1)}%`);
-  setText('afterPacketLoss', `${Number(preview.after.packetLoss).toFixed(1)}%`);
+  setText('beforePacketLoss', `${Number(preview.before.packetLoss).toFixed(2)} %`);
+  setText('afterPacketLoss', `${Number(preview.after.packetLoss).toFixed(2)} %`);
 }
 
 async function runScenarioSimulation() {
@@ -112,31 +120,43 @@ function renderDashboard(data) {
   renderScenarioResult({
     estimatedLatency: computed.latestPredicted,
     estimatedRisk: metadata.riskLevel,
-    suggestedAction: 'Scale before burst'
+    suggestedAction: 'Review AI recommendation'
   });
 
   setText('locationValue', metadata.location);
   setText('uptimeValue', metadata.uptimeValue);
   setText('slaValue', metadata.slaValue);
+
   setText('latencyNow', computed.latestActual);
   setText('predictionNow', computed.latestPredicted);
   setText('throughputNow', computed.latestThroughput);
   setText('packetLossNow', Number(computed.latestPacketLoss).toFixed(1));
+
   setText('impactValue', computed.impactValue);
+
   setText('latencyScore', `${computed.latencyScore}%`);
   setText('throughputScore', `${computed.throughputScore}%`);
   setText('reliabilityScore', `${computed.reliabilityScore}%`);
   setText('aiScore', `${computed.aiScore}%`);
+
   setBar('latencyBar', computed.latencyScore);
   setBar('throughputBar', computed.throughputScore);
   setBar('reliabilityBar', computed.reliabilityScore);
   setBar('aiBar', computed.aiScore);
+
   setText('riskLevel', metadata.riskLevel);
+  setText('slaRiskNow', metadata.riskLevel);
   setText('alertText', data.alertText);
+
   setText('metricChipPrediction', getRiskChipText(computed.latestPredicted, computed.latestActual));
-  setText('metricChipLatency', computed.latestActual <= 60 ? 'Stable' : 'Degraded');
-  setText('metricChipThroughput', computed.latestThroughput >= 110 ? 'Healthy' : 'Warning');
-  setText('metricChipPacketLoss', computed.latestPacketLoss <= 0.3 ? 'Low' : 'Rising');
+  setText('metricChipLatency', computed.latestActual <= 60 ? 'Stable' : computed.latestActual <= 85 ? 'Watch' : 'High');
+  setText('metricChipThroughput', computed.latestThroughput >= 110 ? 'Healthy' : computed.latestThroughput >= 90 ? 'Watch' : 'Low');
+  setText('metricChipPacketLoss', computed.latestPacketLoss <= 0.3 ? 'Low' : computed.latestPacketLoss <= 1 ? 'Rising' : 'High');
+
+  setText('metricChipRisk', metadata.riskLevel);
+  setText('confidenceNow', `${computed.aiScore}`);
+  setText('metricChipConfidence', computed.aiScore >= 90 ? 'Strong' : computed.aiScore >= 80 ? 'Estimated' : 'Review');
+
   setText('lastUpdatedValue', new Date(metadata.lastUpdated).toLocaleString('en-GB'));
 
   renderList(recommendations);
@@ -293,7 +313,10 @@ document.getElementById('manualMetricForm')?.addEventListener('submit', async (e
     const data = await apiRequest('/api/metrics/predict', 'POST', payload);
     renderDashboard(data);
     form.reset();
-    setText('formStatus', 'AI prediction completed and dashboard updated successfully.');
+    setText(
+      'formStatus',
+      `AI prediction completed successfully. Predicted latency: ${data.computed.latestPredicted} ms, risk level: ${data.metadata.riskLevel}.`
+    );
   } catch (error) {
     setText('formStatus', error.message || 'Failed to run AI prediction.');
   }

@@ -1,5 +1,10 @@
 venv/
-__pycache__/
+.venv/
 node_modules/
-.env
+__pycache__/
 *.pyc
+.env
+.git/
+data copy/
+.DS_Store
+Thumbs.db

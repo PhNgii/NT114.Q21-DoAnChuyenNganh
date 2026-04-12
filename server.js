@@ -1,18 +1,23 @@
+const fsSync = require('fs');
+const fs = require('fs/promises');
+const path = require('path');
 const { spawn } = require('child_process');
 const express = require('express');
-const path = require('path');
-const fs = require('fs/promises');
 
 const app = express();
+
 const PORT = process.env.PORT || 3000;
 const DATA_DIR = path.join(__dirname, 'data');
 const DATA_FILE = path.join(DATA_DIR, 'metrics.json');
-const PYTHON_BIN =
-  process.platform === 'win32'
-    ? path.join(__dirname, 'venv', 'Scripts', 'python.exe')
-    : path.join(__dirname, 'venv', 'bin', 'python');
-
 const PREDICT_SCRIPT = path.join(__dirname, 'predict_qos.py');
+
+const PYTHON_BIN =
+  process.env.PYTHON_PATH ||
+  (process.platform === 'win32'
+    ? path.join(__dirname, 'venv', 'Scripts', 'python.exe')
+    : path.join(__dirname, 'venv', 'bin', 'python'));
+
+
 const defaultData = {
   metadata: {
     systemName: 'QoS Command Center',
@@ -352,14 +357,14 @@ app.post('/api/metrics/predict', async (req, res) => {
     data.recommendations = toRecommendationItems(prediction.recommendations);
 
     data.latestPrediction = {
-      actual_latency: actualLatency,
-      throughput,
-      packet_loss: packetLoss,
-      predicted_latency: prediction.predicted_latency,
-      predicted_status: prediction.predicted_status,
-      model_input: prediction.model_input
-    };
-
+  actual_latency: actualLatency,
+  throughput,
+  packet_loss: packetLoss,
+  predicted_latency: prediction.predicted_latency,
+  predicted_status: prediction.predicted_status,
+  model_input: prediction.model_input,
+  recommendations: prediction.recommendations
+};
     clampSeries(data);
     await writeData(data);
 
@@ -448,11 +453,11 @@ app.post('/api/optimize', async (req, res) => {
     data.series.throughputSeries[i] = after.throughput;
   }
 
-  data.metadata.slaValue = '96%';
-  data.metadata.riskLevel = 'Reduced';
-  data.metadata.lastOptimization = new Date().toISOString();
-  data.alertText =
-    'Optimization workflow activated. Traffic shaping and smart scaling recommendations have been prioritized for the next cycle.';
+data.metadata.slaValue = '96%';
+data.metadata.riskLevel = 'Lower';
+data.metadata.lastOptimization = new Date().toISOString();
+data.alertText =
+  'Recommendation preview generated. The dashboard shows expected QoS improvement if the suggested actions are applied.';
 
   data.recommendations = [
     {

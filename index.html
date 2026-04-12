@@ -93,17 +93,7 @@
           <p class="metric-note">Actual network response from the latest sample window.</p>
         </article>
 
-        <article class="metric-card glass-panel">
-          <div class="metric-top">
-            <span class="metric-label">Jitter</span>
-            <span class="metric-chip neutral" id="metricChipJitter">Normal</span>
-          </div>
-          <div class="metric-value-row">
-            <h3 id="jitterNow">12</h3>
-            <span>ms</span>
-          </div>
-          <p class="metric-note">Variation in packet delay across the latest monitoring window.</p>
-        </article>
+       
 
         <article class="metric-card glass-panel">
           <div class="metric-top">
@@ -142,17 +132,7 @@
             <p class="metric-note">Forecasted latency for the next monitoring interval.</p>
           </article>
 
-          <article class="metric-card glass-panel">
-            <div class="metric-top">
-              <span class="metric-label">Predicted jitter</span>
-              <span class="metric-chip neutral" id="metricChipPredictedJitter">Monitor</span>
-            </div>
-            <div class="metric-value-row">
-              <h3 id="predictedJitterNow">16</h3>
-              <span>ms</span>
-            </div>
-            <p class="metric-note">Estimated packet delay variation in the next cycle.</p>
-          </article>
+          
 
           <article class="metric-card glass-panel">
             <div class="metric-top">
@@ -167,15 +147,17 @@
 
           <article class="metric-card glass-panel">
             <div class="metric-top">
-              <span class="metric-label">AI confidence</span>
-              <span class="metric-chip good" id="metricChipConfidence">High</span>
-            </div>
-            <div class="metric-value-row">
-              <h3 id="confidenceNow">89</h3>
-              <span>%</span>
-            </div>
-            <p class="metric-note">Confidence score of the AI forecasting engine.</p>
-          </article>
+              <article class="metric-card glass-panel">
+  <div class="metric-top">
+    <span class="metric-label">Prediction consistency</span>
+    <span class="metric-chip good" id="metricChipConfidence">Estimated</span>
+  </div>
+  <div class="metric-value-row">
+    <h3 id="confidenceNow">89</h3>
+    <span>%</span>
+  </div>
+  <p class="metric-note">Estimated consistency between recent actual values and AI prediction.</p>
+</article>
         </section>
       <section class="dashboard-grid">
         <article class="chart-panel glass-panel">
@@ -237,8 +219,8 @@
   <article class="optimization-panel glass-panel">
     <div class="panel-head compact">
       <div>
-        <span class="section-kicker">Optimization result</span>
-        <h3>Before vs After Optimization</h3>
+        <span class="section-kicker">Optimization preview</span>
+<h3>Before vs After Recommendation Preview</h3>
       </div>
     </div>
 
@@ -261,23 +243,7 @@
         </div>
       </div>
 
-      <div class="opt-card">
-        <div class="opt-top">
-          <span class="opt-label">Jitter</span>
-          <span class="opt-delta improve">↓ 9 ms</span>
-        </div>
-        <div class="opt-values">
-          <div class="opt-box before">
-            <small>Before</small>
-            <strong id="beforeJitter">18 ms</strong>
-          </div>
-          <div class="opt-divider">→</div>
-          <div class="opt-box after">
-            <small>After</small>
-            <strong id="afterJitter">9 ms</strong>
-          </div>
-        </div>
-      </div>
+      
 
       <div class="opt-card">
         <div class="opt-top">
