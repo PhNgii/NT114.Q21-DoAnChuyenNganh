@@ -249,9 +249,17 @@ async function apiRequest(url, method = 'GET', body) {
     body: body ? JSON.stringify(body) : undefined
   });
 
-  const data = await response.json();
+  const rawText = await response.text();
+  let data = {};
+
+  try {
+    data = rawText ? JSON.parse(rawText) : {};
+  } catch (error) {
+    throw new Error(`Invalid server response: ${rawText || 'Empty response body'}`);
+  }
+
   if (!response.ok) {
-    throw new Error(data.error || 'Request failed');
+    throw new Error(data.error || `Request failed with status ${response.status}`);
   }
 
   return data;
@@ -281,25 +289,45 @@ function bindEvents() {
   document.getElementById('runScenarioButton')?.addEventListener('click', runScenarioSimulation);
 
   document.getElementById('optimizeButton')?.addEventListener('click', async () => {
+  try {
     const data = await apiRequest('/api/optimize', 'POST');
     renderDashboard(data);
-  });
+    setText('formStatus', 'Optimization preview generated successfully.');
+  } catch (error) {
+    setText('formStatus', error.message || 'Failed to optimize.');
+  }
+});
 
-  document.getElementById('inspectButton')?.addEventListener('click', async () => {
+document.getElementById('inspectButton')?.addEventListener('click', async () => {
+  try {
     const data = await apiRequest('/api/inspect', 'POST');
     renderDashboard(data);
-  });
+    setText('formStatus', 'Inspection insights loaded successfully.');
+  } catch (error) {
+    setText('formStatus', error.message || 'Failed to inspect.');
+  }
+});
 
-  document.getElementById('simulateButton')?.addEventListener('click', async () => {
+document.getElementById('simulateButton')?.addEventListener('click', async () => {
+  try {
     const data = await apiRequest('/api/metrics/simulate', 'POST');
     renderDashboard(data);
-  });
+    setText('formStatus', 'Simulated sample added successfully.');
+  } catch (error) {
+    setText('formStatus', error.message || 'Failed to simulate metrics.');
+  }
+});
 
-  document.getElementById('resetButton')?.addEventListener('click', async () => {
+document.getElementById('resetButton')?.addEventListener('click', async () => {
+  try {
     const data = await apiRequest('/api/reset', 'POST');
     renderDashboard(data);
     document.getElementById('manualMetricForm')?.reset();
-  });
+    setText('formStatus', 'Dashboard reset successfully.');
+  } catch (error) {
+    setText('formStatus', error.message || 'Failed to reset dashboard.');
+  }
+});
 document.getElementById('manualMetricForm')?.addEventListener('submit', async (event) => {
   event.preventDefault();
 
@@ -326,5 +354,5 @@ updateTime();
 setInterval(updateTime, 1000);
 bindEvents();
 loadDashboard().catch((error) => {
-  setText('formStatus', error.message);
+  setText('formStatus', error.message || 'Failed to load dashboard.');
 });

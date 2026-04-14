@@ -1,4 +1,3 @@
-const fsSync = require('fs');
 const fs = require('fs/promises');
 const path = require('path');
 const { spawn } = require('child_process');
@@ -10,13 +9,14 @@ const PORT = process.env.PORT || 3000;
 const DATA_DIR = path.join(__dirname, 'data');
 const DATA_FILE = path.join(DATA_DIR, 'metrics.json');
 const PREDICT_SCRIPT = path.join(__dirname, 'predict_qos.py');
+const PUBLIC_DIR = path.join(__dirname, 'public');
 
 const PYTHON_BIN =
   process.env.PYTHON_PATH ||
-  (process.platform === 'win32'
-    ? path.join(__dirname, 'venv', 'Scripts', 'python.exe')
-    : path.join(__dirname, 'venv', 'bin', 'python'));
+  (process.platform === 'win32' ? 'python' : 'python3');
 
+app.use(express.json());
+app.use(express.static(PUBLIC_DIR));
 
 const defaultData = {
   metadata: {
@@ -73,9 +73,6 @@ const defaultData = {
     'The model detects a rising latency slope. Consider optimization before SLA risk crosses the warning threshold.'
 };
 
-app.use(express.json());
-app.use(express.static(__dirname));
-
 async function ensureDataFile() {
   await fs.mkdir(DATA_DIR, { recursive: true });
   try {
@@ -87,13 +84,24 @@ async function ensureDataFile() {
 
 async function readData() {
   await ensureDataFile();
-  const raw = await fs.readFile(DATA_FILE, 'utf8');
-  return JSON.parse(raw);
+
+  try {
+    const raw = await fs.readFile(DATA_FILE, 'utf8');
+    return JSON.parse(raw);
+  } catch (error) {
+    console.error('Failed to read metrics.json:', error);
+    return JSON.parse(JSON.stringify(defaultData));
+  }
 }
 
 async function writeData(data) {
-  data.metadata.lastUpdated = new Date().toISOString();
-  await fs.writeFile(DATA_FILE, JSON.stringify(data, null, 2), 'utf8');
+  try {
+    data.metadata.lastUpdated = new Date().toISOString();
+    await fs.writeFile(DATA_FILE, JSON.stringify(data, null, 2), 'utf8');
+  } catch (error) {
+    console.error('Failed to write metrics.json:', error);
+    throw error;
+  }
 }
 
 function clampSeries(data, limit = 12) {
@@ -120,13 +128,23 @@ function toRecommendationItems(texts = []) {
   }));
 }
 
+function isInRange(value, min, max) {
+  return typeof value === 'number' && !Number.isNaN(value) && value >= min && value <= max;
+}
+
 function buildAlert(predictedStatus, predictedLatency, actualLatency) {
+  const diff = predictedLatency - actualLatency;
+
   if (predictedStatus === 'Critical') {
     return `AI predicts Critical status with latency ${predictedLatency.toFixed(2)} ms. Immediate optimization is recommended.`;
   }
 
   if (predictedStatus === 'Warning') {
-    return `AI predicts rising latency in the next cycle (${predictedLatency.toFixed(2)} ms), higher than current actual latency ${actualLatency} ms.`;
+    if (diff > 0) {
+      return `AI predicts rising latency in the next cycle (${predictedLatency.toFixed(2)} ms), about ${diff.toFixed(2)} ms higher than current actual latency ${actualLatency} ms.`;
+    }
+
+    return `AI predicts a warning trend. Predicted latency is ${predictedLatency.toFixed(2)} ms while current actual latency is ${actualLatency} ms.`;
   }
 
   return `AI predicts the system is stable. Current predicted latency is ${predictedLatency.toFixed(2)} ms.`;
@@ -268,32 +286,64 @@ app.post('/api/metrics/manual', async (req, res) => {
 });
 
 app.post('/api/metrics/simulate', async (req, res) => {
-  const data = await readData();
-  const lastActual = data.series.actualLatency.at(-1) ?? 50;
-  const lastPredicted = data.series.predictedLatency.at(-1) ?? 60;
-  const lastThroughput = data.series.throughputSeries.at(-1) ?? 120;
-  const lastPacketLoss = data.series.packetLossSeries.at(-1) ?? 0.2;
+  try {
+    const data = await readData();
 
-  const actualLatency = Math.max(30, Math.min(120, lastActual + Math.round((Math.random() - 0.2) * 12)));
-  const predictedLatency = Math.max(actualLatency, Math.min(140, lastPredicted + Math.round((Math.random() + 0.1) * 14)));
-  const throughput = Math.max(80, Math.min(180, lastThroughput + Math.round((Math.random() - 0.45) * 14)));
-  const packetLoss = Math.max(0.0, Math.min(2.5, Number((lastPacketLoss + (Math.random() - 0.5) * 0.25).toFixed(1))));
+    const lastActual = data.series.actualLatency.at(-1) ?? 50;
+    const lastPredicted = data.series.predictedLatency.at(-1) ?? 60;
+    const lastThroughput = data.series.throughputSeries.at(-1) ?? 120;
+    const lastPacketLoss = data.series.packetLossSeries.at(-1) ?? 0.2;
 
-  data.series.labels.push(formatNextLabel());
-  data.series.actualLatency.push(actualLatency);
-  data.series.predictedLatency.push(predictedLatency);
-  data.series.throughputSeries.push(throughput);
-  data.series.packetLossSeries.push(packetLoss);
-  data.metadata.riskLevel = predictedLatency - actualLatency >= 25 ? 'High' : predictedLatency - actualLatency >= 12 ? 'Medium' : 'Low';
-  data.alertText =
-    data.metadata.riskLevel === 'High'
-      ? 'The simulated sample shows a sharp rise in predicted latency. Immediate mitigation is recommended.'
-      : 'The simulated sample was added successfully. Monitoring remains active.';
+    const actualLatency = Math.max(
+      30,
+      Math.min(120, lastActual + Math.round((Math.random() - 0.2) * 12))
+    );
 
-  clampSeries(data);
-  await writeData(data);
-  res.json(createResponse(data));
+    const predictedLatency = Math.max(
+      actualLatency,
+      Math.min(140, lastPredicted + Math.round((Math.random() + 0.1) * 14))
+    );
+
+    const throughput = Math.max(
+      80,
+      Math.min(180, lastThroughput + Math.round((Math.random() - 0.45) * 14))
+    );
+
+    const packetLoss = Math.max(
+      0.0,
+      Math.min(2.5, Number((lastPacketLoss + (Math.random() - 0.5) * 0.25).toFixed(1)))
+    );
+
+    data.series.labels.push(formatNextLabel());
+    data.series.actualLatency.push(actualLatency);
+    data.series.predictedLatency.push(predictedLatency);
+    data.series.throughputSeries.push(throughput);
+    data.series.packetLossSeries.push(packetLoss);
+
+    data.metadata.riskLevel =
+      predictedLatency - actualLatency >= 25
+        ? 'High'
+        : predictedLatency - actualLatency >= 12
+        ? 'Medium'
+        : 'Low';
+
+    data.alertText =
+      data.metadata.riskLevel === 'High'
+        ? 'The simulated sample shows a sharp rise in predicted latency. Immediate mitigation is recommended.'
+        : 'The simulated sample was added successfully. Monitoring remains active.';
+
+    clampSeries(data);
+    await writeData(data);
+
+    res.json(createResponse(data));
+  } catch (error) {
+    console.error('Simulate error:', error);
+    res.status(500).json({
+      error: error.message || 'Failed to simulate metrics.'
+    });
+  }
 });
+
 app.post('/api/metrics/predict', async (req, res) => {
   try {
     const actualLatency = Number(req.body.actualLatency);
@@ -336,6 +386,25 @@ app.post('/api/metrics/predict', async (req, res) => {
       });
     }
 
+    if (
+      !isInRange(features.cpu_usage, 0, 100) ||
+      !isInRange(features.memory_usage, 0, 100) ||
+      !isInRange(features.bandwidth_usage, 0, 100) ||
+      !isInRange(features.packet_loss, 0, 100) ||
+      !isInRange(features.network_load, 0, 100) ||
+      !isInRange(features.time_of_day, 0, 23) ||
+      !isInRange(features.is_peak_hour, 0, 1) ||
+      actualLatency < 0 ||
+      throughput < 0 ||
+      features.active_users < 0 ||
+      features.request_rate < 0 ||
+      features.instance_count < 1
+    ) {
+      return res.status(400).json({
+        error: 'Input values are out of valid range.'
+      });
+    }
+
     const prediction = await runPythonPrediction(features);
 
     const data = await readData();
@@ -357,14 +426,15 @@ app.post('/api/metrics/predict', async (req, res) => {
     data.recommendations = toRecommendationItems(prediction.recommendations);
 
     data.latestPrediction = {
-  actual_latency: actualLatency,
-  throughput,
-  packet_loss: packetLoss,
-  predicted_latency: prediction.predicted_latency,
-  predicted_status: prediction.predicted_status,
-  model_input: prediction.model_input,
-  recommendations: prediction.recommendations
-};
+      actual_latency: actualLatency,
+      throughput,
+      packet_loss: packetLoss,
+      predicted_latency: prediction.predicted_latency,
+      predicted_status: prediction.predicted_status,
+      model_input: prediction.model_input,
+      recommendations: prediction.recommendations
+    };
+
     clampSeries(data);
     await writeData(data);
 
@@ -376,6 +446,7 @@ app.post('/api/metrics/predict', async (req, res) => {
     });
   }
 });
+
 function buildScenarioResult(type, data) {
   const i = data.series.actualLatency.length - 1;
 
@@ -495,7 +566,7 @@ app.post('/api/reset', async (req, res) => {
 });
 
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
+  res.sendFile(path.join(PUBLIC_DIR, 'index.html'));
 });
 app.post('/api/scenario', async (req, res) => {
   const data = await readData();
@@ -508,8 +579,45 @@ app.post('/api/scenario', async (req, res) => {
     scenarioResult: result
   });
 });
-ensureDataFile().then(() => {
-  app.listen(PORT, () => {
-    console.log(`Server running at http://localhost:${PORT}`);
-  });
+process.on('uncaughtException', (err) => {
+  console.error('UNCAUGHT EXCEPTION:', err);
 });
+
+process.on('unhandledRejection', (reason) => {
+  console.error('UNHANDLED REJECTION:', reason);
+});
+
+process.on('exit', (code) => {
+  console.log('PROCESS EXIT with code:', code);
+});
+
+async function startServer() {
+  try {
+    console.log('Starting server...');
+    console.log('Current working directory:', process.cwd());
+    console.log('Server file directory:', __dirname);
+    console.log('PORT =', PORT);
+    console.log('PYTHON_BIN =', PYTHON_BIN);
+    console.log('DATA_FILE =', DATA_FILE);
+
+    await ensureDataFile();
+    console.log('Data file is ready.');
+
+    const server = app.listen(PORT, () => {
+      console.log(`Server running at http://localhost:${PORT}`);
+      console.log('PID =', process.pid);
+    });
+
+    server.on('error', (err) => {
+      console.error('SERVER ERROR:', err);
+    });
+
+    server.on('close', () => {
+      console.log('SERVER CLOSED');
+    });
+  } catch (error) {
+    console.error('STARTUP FAILED:', error);
+  }
+}
+
+startServer();
