@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QoS Command Center</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="bg-orb orb-1"></div>
+  <div class="bg-orb orb-2"></div>
+  <div class="bg-grid"></div>
+
+  <div class="app-shell">
+    <aside class="sidebar glass-panel">
+      <div class="brand">
+        <div class="brand-icon">Q</div>
+        <div>
+          <h1>QoS Vision</h1>
+          <p>AWS Intelligence Suite</p>
+        </div>
+      </div>
+
+      <nav class="nav-links">
+        <a class="active" href="#">Overview</a>
+        <a href="#liveDataSection">Real-time Analytics</a>
+        <a href="#manualControlSection">Prediction</a>
+        <a href="#manualControlSection">Optimization</a>
+        <a href="#historySection">Reports</a>
+      </nav>
+
+      <section class="side-card highlight-card">
+        <div class="badge">AI STATUS</div>
+        <h3>Congestion risk detected</h3>
+        <p>Prediction engine forecasts higher latency in the next 10 minutes on the primary workload path.</p>
+        <button class="ghost-btn" id="inspectButton">Inspect model insight</button>
+      </section>
+
+      <section class="side-card quick-stats">
+        <div>
+          <span>Availability</span>
+          <strong id="uptimeValue">99.97%</strong>
+        </div>
+        <div>
+          <span>SLA Confidence</span>
+          <strong id="slaValue">92%</strong>
+        </div>
+        <div>
+          <span>Last updated</span>
+          <strong id="lastUpdatedValue">--</strong>
+        </div>
+      </section>
+    </aside>
+
+    <main class="main-content">
+      <header class="hero glass-panel">
+        <div>
+          <div class="eyebrow-row">
+            <span class="live-pill"><span class="dot"></span> Dynamic monitoring</span>
+            <span class="location-pill" id="locationValue">ap-southeast-2 • AWS EC2</span>
+          </div>
+          <h2>QoS Command Center</h2>
+          <p>
+            A premium dashboard for monitoring latency, throughput and AI-based prediction
+            so your team can detect congestion early and optimize network quality faster.
+          </p>
+        </div>
+
+        <div class="hero-actions">
+          <div class="clock-card">
+            <span>Current time</span>
+            <strong id="time"></strong>
+          </div>
+          <button class="primary-btn" id="optimizeButton">Run Smart Optimization</button>
+          <button class="primary-btn" id="predictAwsButton" type="button">Predict from AWS CloudWatch</button>
+          <button class="ghost-btn" id="simulateButton">Generate New Sample</button>
+        </div>
+      </header>
+
+      <section class="metrics-grid" id="liveDataSection">
+        <article class="metric-card glass-panel">
+          <div class="metric-top">
+            <span class="metric-label">Latency</span>
+            <span class="metric-chip good" id="metricChipLatency">Stable</span>
+          </div>
+          <div class="metric-value-row">
+            <h3 id="latencyNow">52</h3>
+            <span>ms</span>
+          </div>
+          <p class="metric-note">Actual network response from the latest sample window.</p>
+        </article>
+
+       
+
+        <article class="metric-card glass-panel">
+          <div class="metric-top">
+            <span class="metric-label">Throughput</span>
+            <span class="metric-chip good" id="metricChipThroughput">Healthy</span>
+          </div>
+          <div class="metric-value-row">
+            <h3 id="throughputNow">118</h3>
+            <span>Mbps</span>
+          </div>
+          <p class="metric-note">Average bandwidth capacity currently delivered to the workload.</p>
+        </article>
+
+        <article class="metric-card glass-panel">
+          <div class="metric-top">
+            <span class="metric-label">Packet loss</span>
+            <span class="metric-chip neutral" id="metricChipPacketLoss">Low</span>
+          </div>
+          <div class="metric-value-row">
+            <h3 id="packetLossNow">0.2</h3>
+            <span>%</span>
+          </div>
+          <p class="metric-note">Packet stability remains within acceptable QoS tolerance.</p>
+        </article>
+      </section>
+              <section class="prediction-grid">
+          <article class="metric-card glass-panel">
+            <div class="metric-top">
+              <span class="metric-label">Predicted latency</span>
+              <span class="metric-chip warn" id="metricChipPrediction">Watch</span>
+            </div>
+            <div class="metric-value-row">
+              <h3 id="predictionNow">78</h3>
+              <span>ms</span>
+            </div>
+            <p class="metric-note">Forecasted latency for the next monitoring interval.</p>
+          </article>
+
+          
+
+          <article class="metric-card glass-panel">
+            <div class="metric-top">
+              <span class="metric-label">SLA risk</span>
+              <span class="metric-chip warn" id="metricChipRisk">Medium</span>
+            </div>
+            <div class="metric-value-row">
+              <h3 id="slaRiskNow">Medium</h3>
+            </div>
+            <p class="metric-note">Overall probability that QoS may violate the target threshold.</p>
+          </article>
+
+          <article class="metric-card glass-panel">
+            <div class="metric-top">
+              <article class="metric-card glass-panel">
+  <div class="metric-top">
+    <span class="metric-label">Prediction consistency</span>
+    <span class="metric-chip good" id="metricChipConfidence">Estimated</span>
+  </div>
+  <div class="metric-value-row">
+    <h3 id="confidenceNow">89</h3>
+    <span>%</span>
+  </div>
+  <p class="metric-note">Estimated consistency between recent actual values and AI prediction.</p>
+</article>
+        </section>
+      <section class="dashboard-grid">
+        <article class="chart-panel glass-panel">
+          <div class="panel-head">
+            <div>
+              <span class="section-kicker">Trend analysis</span>
+              <h3>Latency vs AI Prediction</h3>
+            </div>
+            <div class="legend-inline">
+              <span><i class="legend-dot actual"></i>Actual</span>
+              <span><i class="legend-dot predicted"></i>Predicted</span>
+            </div>
+          </div>
+          <canvas id="chart"></canvas>
+        </article>
+        
+        <article class="insight-panel glass-panel">
+          <div class="panel-head compact">
+            <div>
+              <span class="section-kicker">System health</span>
+              <h3>QoS quality matrix</h3>
+            </div>
+          </div>
+
+          <div class="health-item">
+            <div class="health-row">
+              <span>Latency control</span>
+              <strong id="latencyScore">84%</strong>
+            </div>
+            <div class="progress"><span id="latencyBar"></span></div>
+          </div>
+
+          <div class="health-item">
+            <div class="health-row">
+              <span>Throughput efficiency</span>
+              <strong id="throughputScore">88%</strong>
+            </div>
+            <div class="progress"><span id="throughputBar"></span></div>
+          </div>
+
+          <div class="health-item">
+            <div class="health-row">
+              <span>SLA reliability</span>
+              <strong id="reliabilityScore">92%</strong>
+            </div>
+            <div class="progress"><span id="reliabilityBar"></span></div>
+          </div>
+
+          <div class="health-item">
+            <div class="health-row">
+              <span>AI confidence</span>
+              <strong id="aiScore">89%</strong>
+            </div>
+            <div class="progress"><span id="aiBar"></span></div>
+          </div>
+        </article>
+      </section>
+      <section class="optimization-grid">
+  <article class="optimization-panel glass-panel">
+    <div class="panel-head compact">
+      <div>
+        <span class="section-kicker">Optimization preview</span>
+<h3>Before vs After Recommendation Preview</h3>
+      </div>
+    </div>
+
+    <div class="optimization-cards">
+      <div class="opt-card">
+        <div class="opt-top">
+          <span class="opt-label">Latency</span>
+          <span class="opt-delta improve">↓ 24 ms</span>
+        </div>
+        <div class="opt-values">
+          <div class="opt-box before">
+            <small>Before</small>
+            <strong id="beforeLatency">78 ms</strong>
+          </div>
+          <div class="opt-divider">→</div>
+          <div class="opt-box after">
+            <small>After</small>
+            <strong id="afterLatency">54 ms</strong>
+          </div>
+        </div>
+      </div>
+
+      
+
+      <div class="opt-card">
+        <div class="opt-top">
+          <span class="opt-label">Throughput</span>
+          <span class="opt-delta improve">↑ 20 Mbps</span>
+        </div>
+        <div class="opt-values">
+          <div class="opt-box before">
+            <small>Before</small>
+            <strong id="beforeThroughput">102 Mbps</strong>
+          </div>
+          <div class="opt-divider">→</div>
+          <div class="opt-box after">
+            <small>After</small>
+            <strong id="afterThroughput">122 Mbps</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="opt-card">
+        <div class="opt-top">
+          <span class="opt-label">Packet loss</span>
+          <span class="opt-delta improve">↓ 0.7%</span>
+        </div>
+        <div class="opt-values">
+          <div class="opt-box before">
+            <small>Before</small>
+            <strong id="beforePacketLoss">0.9%</strong>
+          </div>
+          <div class="opt-divider">→</div>
+          <div class="opt-box after">
+            <small>After</small>
+            <strong id="afterPacketLoss">0.2%</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+  </article>
+</section>
+      <section class="bottom-grid">
+        <article class="recommendation-panel glass-panel">
+          <div class="panel-head compact">
+            <div>
+              <span class="section-kicker">Recommendation engine</span>
+              <h3>Optimization suggestions</h3>
+            </div>
+          </div>
+
+          <ul class="recommendation-list" id="recommendationList">
+            <li>
+              <span class="list-icon">01</span>
+              <div>
+                <strong>Re-route burst traffic</strong>
+                <p>Move short-lived requests away from the busiest path to reduce queueing delay.</p>
+              </div>
+            </li>
+          </ul>
+        </article>
+
+        <article class="alert-panel glass-panel">
+          <div class="badge soft">Priority alert</div>
+          <h3>Potential congestion in the next 10 minutes</h3>
+          <p id="alertText">
+            The model detects a rising latency slope. Consider optimization before SLA risk crosses the warning threshold.
+          </p>
+          <div class="alert-stats">
+            <div>
+              <span>Risk level</span>
+              <strong id="riskLevel">Medium</strong>
+            </div>
+            <div>
+              <span>Expected impact</span>
+              <strong id="impactValue">+26 ms</strong>
+            </div>
+          </div>
+        </article>
+      </section>
+      <section class="scenario-grid">
+        <article class="scenario-panel glass-panel">
+          <div class="panel-head compact">
+            <div>
+              <span class="section-kicker">What-if simulation</span>
+              <h3>Scenario testing panel</h3>
+            </div>
+          </div>
+
+          <div class="scenario-controls">
+            <label>
+              <span>Scenario</span>
+              <select id="scenarioSelect">
+                <option value="normal">Normal traffic</option>
+                <option value="peak">Peak traffic</option>
+                <option value="congestion">Congestion</option>
+                <option value="loss">Packet loss anomaly</option>
+                <option value="scaleout">Scale-out preview</option>
+              </select>
+            </label>
+
+            <button class="primary-btn" type="button" id="runScenarioButton">Run scenario</button>
+          </div>
+
+          <div class="scenario-result">
+            <div>
+              <span>Estimated latency</span>
+              <strong id="scenarioLatency">72 ms</strong>
+            </div>
+            <div>
+              <span>Estimated risk</span>
+              <strong id="scenarioRisk">Medium</strong>
+            </div>
+            <div>
+              <span>Suggested action</span>
+              <strong id="scenarioAction">Scale before burst</strong>
+            </div>
+          </div>
+        </article>
+      </section>
+      <section class="control-grid" id="manualControlSection">
+        <article class="control-panel glass-panel">
+          <div class="panel-head compact">
+            <div>
+              <span class="section-kicker">Manual input</span>
+              <h3>Add real or simulated QoS sample</h3>
+            </div>
+          </div>
+
+        <form id="manualMetricForm" class="metric-form">
+  <div class="form-grid">
+    <label>
+      <span>Label / Time</span>
+      <input type="text" name="label" placeholder="21:00" />
+    </label>
+
+    <label>
+      <span>Actual latency (ms)</span>
+      <input type="number" name="actualLatency" min="0" required />
+    </label>
+
+    <label>
+      <span>Throughput (Mbps)</span>
+      <input type="number" name="throughput" min="0" required />
+    </label>
+
+    <label>
+      <span>Packet loss (%)</span>
+      <input type="number" name="packetLoss" min="0" step="0.1" required />
+    </label>
+
+    <label>
+      <span>CPU usage (%)</span>
+      <input type="number" name="cpuUsage" min="0" max="100" required />
+    </label>
+
+    <label>
+      <span>Memory usage (%)</span>
+      <input type="number" name="memoryUsage" min="0" max="100" required />
+    </label>
+
+    <label>
+      <span>Bandwidth usage (%)</span>
+      <input type="number" name="bandwidthUsage" min="0" max="100" required />
+    </label>
+
+    <label>
+      <span>Network load (%)</span>
+      <input type="number" name="networkLoad" min="0" max="100" required />
+    </label>
+
+    <label>
+      <span>Active users</span>
+      <input type="number" name="activeUsers" min="0" required />
+    </label>
+
+    <label>
+      <span>Request rate</span>
+      <input type="number" name="requestRate" min="0" required />
+    </label>
+
+    <label>
+      <span>Instance count</span>
+      <input type="number" name="instanceCount" min="1" required />
+    </label>
+  </div>
+
+  <div class="form-actions">
+    <button type="submit" class="primary-btn">Run AI prediction</button>
+    <button type="button" class="ghost-btn" id="resetButton">Reset data</button>
+  </div>
+
+  <p class="form-status" id="formStatus">
+    Enter a QoS sample so the AI model can predict and update the dashboard.
+  </p>
+</form>
+        </article>
+
+        <article class="history-panel glass-panel" id="historySection">
+          <div class="panel-head compact">
+            <div>
+              <span class="section-kicker">Recent samples</span>
+              <h3>Latest QoS history</h3>
+            </div>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Time</th>
+                  <th>Actual</th>
+                  <th>Predicted</th>
+                  <th>Throughput</th>
+                  <th>Packet loss</th>
+                </tr>
+              </thead>
+              <tbody id="historyBody"></tbody>
+            </table>
+          </div>
+        </article>
+      </section>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

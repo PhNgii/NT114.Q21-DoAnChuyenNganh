@@ -1,4 +1,3 @@
-const fsSync = require('fs');
 const fs = require('fs/promises');
 const path = require('path');
 const { spawn } = require('child_process');
@@ -13,15 +12,11 @@ const PREDICT_SCRIPT = path.join(__dirname, 'predict_qos.py');
 
 const PYTHON_BIN =
   process.env.PYTHON_PATH ||
-  (process.platform === 'win32'
-    ? path.join(__dirname, 'venv', 'Scripts', 'python.exe')
-    : path.join(__dirname, 'venv', 'bin', 'python'));
 
 
 const defaultData = {
   metadata: {
     systemName: 'QoS Command Center',
-    location: 'ap-southeast-1 • AWS',
     uptimeValue: '99.97%',
     slaValue: '92%',
     riskLevel: 'Medium',
@@ -73,9 +68,6 @@ const defaultData = {
     'The model detects a rising latency slope. Consider optimization before SLA risk crosses the warning threshold.'
 };
 
-app.use(express.json());
-app.use(express.static(__dirname));
-
 async function ensureDataFile() {
   await fs.mkdir(DATA_DIR, { recursive: true });
   try {
@@ -87,17 +79,12 @@ async function ensureDataFile() {
 
 async function readData() {
   await ensureDataFile();
-  const raw = await fs.readFile(DATA_FILE, 'utf8');
-  return JSON.parse(raw);
 }
 
 async function writeData(data) {
-  data.metadata.lastUpdated = new Date().toISOString();
-  await fs.writeFile(DATA_FILE, JSON.stringify(data, null, 2), 'utf8');
 }
 
 function clampSeries(data, limit = 12) {
-  const keys = ['labels', 'actualLatency', 'predictedLatency', 'throughputSeries', 'packetLossSeries'];
   for (const key of keys) {
     if (Array.isArray(data.series[key]) && data.series[key].length > limit) {
       data.series[key] = data.series[key].slice(-limit);
@@ -126,7 +113,6 @@ function buildAlert(predictedStatus, predictedLatency, actualLatency) {
   }
 
   if (predictedStatus === 'Warning') {
-    return `AI predicts rising latency in the next cycle (${predictedLatency.toFixed(2)} ms), higher than current actual latency ${actualLatency} ms.`;
   }
 
   return `AI predicts the system is stable. Current predicted latency is ${predictedLatency.toFixed(2)} ms.`;
@@ -147,9 +133,6 @@ function runPythonPrediction(payload) {
         PYTHONIOENCODING: 'utf-8'
       }
     });
-      py.on('error', (err) => {
-    reject(new Error(`Cannot start Python process: ${err.message}`));
-  });
     let stdout = '';
     let stderr = '';
 
@@ -192,7 +175,6 @@ function computeScores(data) {
   const latencyScore = Math.max(68, Math.min(98, 100 - latestActual * 0.32));
   const throughputScore = Math.max(70, Math.min(98, latestThroughput * 0.75));
   const reliabilityScore = Math.max(65, Math.min(99, 98 - latestPacketLoss * 20));
-  const aiScore = Math.max(75, Math.min(97, 100 - Math.abs(latestPredicted - latestActual) * 0.55));
 
   return {
     latestActual,
@@ -246,7 +228,6 @@ app.post('/api/metrics/manual', async (req, res) => {
 
   const hasInvalidValue = Object.values(values).some((value) => Number.isNaN(value));
   if (hasInvalidValue) {
-    return res.status(400).json({ error: 'Dữ liệu không hợp lệ. Vui lòng nhập đủ 4 chỉ số.' });
   }
 
   const data = await readData();
@@ -256,7 +237,6 @@ app.post('/api/metrics/manual', async (req, res) => {
   data.series.throughputSeries.push(values.throughput);
   data.series.packetLossSeries.push(values.packetLoss);
 
-  data.metadata.riskLevel = values.predictedLatency - values.actualLatency >= 20 ? 'High' : 'Medium';
   data.alertText =
     values.predictedLatency > values.actualLatency
       ? 'A new sample indicates predicted latency is higher than actual latency. Consider proactive optimization.'
@@ -268,31 +248,9 @@ app.post('/api/metrics/manual', async (req, res) => {
 });
 
 app.post('/api/metrics/simulate', async (req, res) => {
-  const data = await readData();
-  const lastActual = data.series.actualLatency.at(-1) ?? 50;
-  const lastPredicted = data.series.predictedLatency.at(-1) ?? 60;
-  const lastThroughput = data.series.throughputSeries.at(-1) ?? 120;
-  const lastPacketLoss = data.series.packetLossSeries.at(-1) ?? 0.2;
 
-  const actualLatency = Math.max(30, Math.min(120, lastActual + Math.round((Math.random() - 0.2) * 12)));
-  const predictedLatency = Math.max(actualLatency, Math.min(140, lastPredicted + Math.round((Math.random() + 0.1) * 14)));
-  const throughput = Math.max(80, Math.min(180, lastThroughput + Math.round((Math.random() - 0.45) * 14)));
-  const packetLoss = Math.max(0.0, Math.min(2.5, Number((lastPacketLoss + (Math.random() - 0.5) * 0.25).toFixed(1))));
 
-  data.series.labels.push(formatNextLabel());
-  data.series.actualLatency.push(actualLatency);
-  data.series.predictedLatency.push(predictedLatency);
-  data.series.throughputSeries.push(throughput);
-  data.series.packetLossSeries.push(packetLoss);
-  data.metadata.riskLevel = predictedLatency - actualLatency >= 25 ? 'High' : predictedLatency - actualLatency >= 12 ? 'Medium' : 'Low';
-  data.alertText =
-    data.metadata.riskLevel === 'High'
-      ? 'The simulated sample shows a sharp rise in predicted latency. Immediate mitigation is recommended.'
-      : 'The simulated sample was added successfully. Monitoring remains active.';
 
-  clampSeries(data);
-  await writeData(data);
-  res.json(createResponse(data));
 });
 app.post('/api/metrics/predict', async (req, res) => {
   try {
@@ -336,37 +294,8 @@ app.post('/api/metrics/predict', async (req, res) => {
       });
     }
 
-    const prediction = await runPythonPrediction(features);
 
-    const data = await readData();
-    const label = (req.body.label || '').trim() || formatNextLabel();
 
-    data.series.labels.push(label);
-    data.series.actualLatency.push(actualLatency);
-    data.series.predictedLatency.push(Math.round(prediction.predicted_latency));
-    data.series.throughputSeries.push(throughput);
-    data.series.packetLossSeries.push(packetLoss);
-
-    data.metadata.riskLevel = mapStatusToRiskLevel(prediction.predicted_status);
-    data.alertText = buildAlert(
-      prediction.predicted_status,
-      prediction.predicted_latency,
-      actualLatency
-    );
-
-    data.recommendations = toRecommendationItems(prediction.recommendations);
-
-    data.latestPrediction = {
-  actual_latency: actualLatency,
-  throughput,
-  packet_loss: packetLoss,
-  predicted_latency: prediction.predicted_latency,
-  predicted_status: prediction.predicted_status,
-  model_input: prediction.model_input,
-  recommendations: prediction.recommendations
-};
-    clampSeries(data);
-    await writeData(data);
 
     res.json(createResponse(data));
   } catch (error) {
@@ -453,11 +382,6 @@ app.post('/api/optimize', async (req, res) => {
     data.series.throughputSeries[i] = after.throughput;
   }
 
-data.metadata.slaValue = '96%';
-data.metadata.riskLevel = 'Lower';
-data.metadata.lastOptimization = new Date().toISOString();
-data.alertText =
-  'Recommendation preview generated. The dashboard shows expected QoS improvement if the suggested actions are applied.';
 
   data.recommendations = [
     {
@@ -495,7 +419,6 @@ app.post('/api/reset', async (req, res) => {
 });
 
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
 });
 app.post('/api/scenario', async (req, res) => {
   const data = await readData();
@@ -508,8 +431,4 @@ app.post('/api/scenario', async (req, res) => {
     scenarioResult: result
   });
 });
-ensureDataFile().then(() => {
-  app.listen(PORT, () => {
-    console.log(`Server running at http://localhost:${PORT}`);
-  });
 });

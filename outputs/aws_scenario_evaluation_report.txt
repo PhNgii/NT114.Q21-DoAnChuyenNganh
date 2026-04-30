@@ -1,0 +1,48 @@
+========== AWS EVALUATION RESULT ==========
+File: eval/aws_scenario_eval_20260429_094559.csv
+Samples: 30
+
+Latency Regression:
+MAE: 14.26 ms
+RMSE: 18.99 ms
+MAPE: 14.23%
+Approx Accuracy: 85.77%
+R2 Score: 0.9189
+
+Tolerance Accuracy:
+Within ±5 ms : 33.33%
+Within ±10 ms: 66.67%
+Within ±20 ms: 66.67%
+Within ±30 ms: 66.67%
+
+Status Classification:
+Status Accuracy: 100.00%
+
+              precision    recall  f1-score   support
+
+    Critical       1.00      1.00      1.00        10
+        Good       1.00      1.00      1.00        10
+     Warning       1.00      1.00      1.00        10
+
+    accuracy                           1.00        30
+   macro avg       1.00      1.00      1.00        30
+weighted avg       1.00      1.00      1.00        30
+
+Confusion Matrix:
+[[10  0  0]
+ [ 0 10  0]
+ [ 0  0 10]]
+
+Label Distribution:
+true_status
+Good        10
+Warning     10
+Critical    10
+Name: count, dtype: int64
+
+Prediction Distribution:
+predicted_status
+Good        10
+Warning     10
+Critical    10
+Name: count, dtype: int64

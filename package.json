@@ -11,6 +11,8 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@aws-sdk/client-cloudwatch": "^3.1032.0",
+    "dotenv": "^17.4.2",
     "express": "^5.2.1"
   }
 }

@@ -1,0 +1,67 @@
+========== CALIBRATED AWS EVALUATION RESULT ==========
+File: eval/aws_scenario_eval_20260430_074039.csv
+Calibration file: models/latency_calibration.json
+Samples: 30
+
+Latency Regression After Calibration:
+MAE: 1.61 ms
+RMSE: 2.70 ms
+MAPE: 4.50%
+Approx Accuracy: 95.50%
+R2 Score: 0.9983
+
+Tolerance Accuracy After Calibration:
+Within ±5 ms : 83.33%
+Within ±10 ms: 100.00%
+Within ±20 ms: 100.00%
+Within ±30 ms: 100.00%
+
+Status Classification:
+Status Accuracy: 100.00%
+              precision    recall  f1-score   support
+
+    Critical       1.00      1.00      1.00        10
+        Good       1.00      1.00      1.00        10
+     Warning       1.00      1.00      1.00        10
+
+    accuracy                           1.00        30
+   macro avg       1.00      1.00      1.00        30
+weighted avg       1.00      1.00      1.00        30
+
+Confusion Matrix:
+[[10  0  0]
+ [ 0 10  0]
+ [ 0  0 10]]
+
+Preview:
+scenario  actual_latency  predicted_latency  calibrated_predicted_latency  calibrated_latency_error true_status predicted_status
+  normal           33.38              24.29                        29.842                     3.538        Good             Good
+  normal           33.43              24.29                        29.842                     3.588        Good             Good
+  normal           33.35              24.29                        29.842                     3.508        Good             Good
+  normal           35.64              24.58                        30.132                     5.508        Good             Good
+  normal           34.98              24.58                        30.132                     4.848        Good             Good
+  normal           34.77              24.26                        29.812                     4.958        Good             Good
+  normal           34.83              24.26                        29.812                     5.018        Good             Good
+  normal           34.94              24.28                        29.832                     5.108        Good             Good
+  normal           34.91              24.28                        29.832                     5.078        Good             Good
+  normal           34.92              24.28                        29.832                     5.088        Good             Good
+ warning          109.03             105.36                       109.030                     0.000     Warning          Warning
+ warning          109.13             105.36                       109.030                     0.100     Warning          Warning
+ warning          109.01             105.36                       109.030                     0.020     Warning          Warning
+ warning          109.45             105.36                       109.030                     0.420     Warning          Warning
+ warning          109.00             105.36                       109.030                     0.030     Warning          Warning
+ warning          109.21             105.36                       109.030                     0.180     Warning          Warning
+ warning          108.93             105.36                       109.030                     0.100     Warning          Warning
+ warning          108.96             105.36                       109.030                     0.070     Warning          Warning
+ warning          109.00             105.36                       109.030                     0.030     Warning          Warning
+ warning          108.98             105.36                       109.030                     0.050     Warning          Warning
+critical          195.09             163.10                       195.139                     0.049    Critical         Critical
+critical          195.09             163.10                       195.139                     0.049    Critical         Critical
+critical          194.97             163.10                       195.139                     0.169    Critical         Critical
+critical          195.02             163.10                       195.139                     0.119    Critical         Critical
+critical          194.94             163.10                       195.139                     0.199    Critical         Critical
+critical          194.99             163.10                       195.139                     0.149    Critical         Critical
+critical          195.02             163.10                       195.139                     0.119    Critical         Critical
+critical          195.04             163.10                       195.139                     0.099    Critical         Critical
+critical          195.05             163.10                       195.139                     0.089    Critical         Critical
+critical          194.98             163.10                       195.139                     0.159    Critical         Critical
