@@ -1,25 +1,90 @@
 {
   "metadata": {
     "systemName": "QoS Command Center",
+    "location": "ap-southeast-2 • AWS EC2",
     "uptimeValue": "99.97%",
+    "slaValue": "96%",
+    "riskLevel": "Low",
+    "lastOptimization": "2026-04-27T15:31:24.471Z",
+    "lastUpdated": "2026-04-30T08:08:02.784Z"
   },
   "series": {
     "labels": [
+      "AWS",
+      "AWS",
+      "AWS",
+      "AWS",
+      "AWS",
+      "AWS",
+      "AWS",
+      "AWS",
+      "AWS",
+      "AWS",
+      "AWS",
+      "AWS"
     ],
     "actualLatency": [
+      40,
+      40,
+      40,
+      40,
+      40,
+      40,
+      40,
+      40,
+      40,
+      40,
+      40,
+      40
     ],
     "predictedLatency": [
+      24,
+      24,
+      24,
+      24,
+      25,
+      25,
+      25,
+      25,
+      25,
+      40,
+      25,
+      32
     ],
     "throughputSeries": [
+      150,
+      150,
+      150,
+      150,
+      150,
+      150,
+      150,
+      150,
+      150,
+      180,
+      150,
+      150
     ],
     "packetLossSeries": [
       0.2,
+      0.2,
+      0.2,
+      0.2,
+      0.2,
+      0.2,
+      0.2,
+      0.2,
+      0.2,
+      0,
+      0.2,
+      0.2
     ]
   },
   "recommendations": [
     {
       "icon": "01",
       "title": "AI Recommendation 1",
+      "description": "Good status: the system is stable, continue routine monitoring."
     }
   ],
   "insights": [
@@ -39,11 +104,40 @@
       "description": "Latency-sensitive service classes can be preserved by using policy-based queue prioritization."
     }
   ],
+  "alertText": "AI predicts the system is stable. Current predicted latency is 32.32 ms.",
+  "optimizationPreview": {
+    "before": {
+      "latency": 40,
+      "throughput": 174,
+      "packetLoss": 0
+    },
+    "after": {
+      "latency": 40,
+      "throughput": 180,
+      "packetLoss": 0
+    }
+  },
   "latestPrediction": {
+    "source": "AWS CloudWatch",
+    "actual_latency": 40,
+    "throughput": 150,
+    "packet_loss": 0.2,
+    "predicted_latency": 32.32,
+    "predicted_status": "Good",
     "model_input": {
+      "cpu_usage": 1.23,
+      "memory_usage": 32.75,
+      "bandwidth_usage": 0,
+      "packet_loss": 0.2,
+      "network_load": 0.03,
+      "active_users": 120,
+      "request_rate": 300,
+      "instance_count": 1,
+      "time_of_day": 8,
       "is_peak_hour": 0
     },
     "recommendations": [
+      "Good status: the system is stable, continue routine monitoring."
     ]
   }
 }
