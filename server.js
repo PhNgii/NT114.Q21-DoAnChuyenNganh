@@ -709,7 +709,6 @@ app.post('/api/scenario', async (req, res) => {
     scenarioResult: result
   });
 });
-
 process.on('uncaughtException', (err) => {
   console.error('UNCAUGHT EXCEPTION:', err);
 });
